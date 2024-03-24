@@ -1,0 +1,62 @@
+CREATE DATABASE PruebaTecnica
+USE PruebaTecnica 
+
+CREATE TABLE Tickets (
+Id_Tienda VARCHAR(10),
+Id_Registradora VARCHAR(10),
+FechaHora DATETIME, 
+Ticket INT,
+Inpuesto MONEY,
+Total MONEY ,
+FechaHora_Creacion DATETIME
+)
+
+CREATE TABLE Resumen (
+Id_Tienda VARCHAR (10),
+Id_Registradora VARCHAR(10),
+Tickets INT
+)
+
+REATE TRIGGER Insertar_Resumen 
+ON Tickets 
+AFTER INSERT 
+AS
+BEGIN 
+
+	DECLARE @Id_Tienda VARCHAR (10)
+	DECLARE @Id_Registradora VARCHAR (10)
+	DECLARE @TicketRegistrados INT
+	SET NOCOUNT ON;
+
+	SELECT @Id_Tienda = Id_Tienda, @Id_Registradora = Id_Registradora  FROM inserted
+
+	SELECT @TicketRegistrados = COUNT(*)
+
+	FROM Tickets
+	WHERE Id_Tienda = @Id_Tienda
+	AND Id_Registradora = @Id_Registradora
+
+	IF EXISTS (SELECT 1 FROM Resumen WHERE Id_Tienda = @Id_Tienda AND Id_Registradora = @Id_Registradora)
+	BEGIN
+	  UPDATE Resumen 
+	  SET Tickets = @TicketRegistrados
+	  WHERE Id_Tienda = @Id_Tienda AND Id_Registradora = @Id_Registradora
+	END 
+	ELSE 
+	BEGIN 
+	  INSERT INTO Resumen (Id_Tienda, Id_Registradora,Tickets)
+	  VALUES (@Id_Tienda, @Id_Registradora,@TicketRegistrados)
+	END
+END 
+
+
+CREATE PROCEDURE AddTicket 
+@Id_Tienda VARCHAR(10),
+@Id_Registradora VARCHAR(10),
+@FechaHora DATETIME, 
+@Ticket INT,
+@Inpuesto MONEY,
+@Total MONEY ,
+@FechaHora_Creacion DATETIME
+AS
+INSERT INTO Tickets VALUES(@Id_Tienda,@Id_Registradora,@FechaHora, @Ticket, @Inpuesto, @Total,@FechaHora_Creacion)
